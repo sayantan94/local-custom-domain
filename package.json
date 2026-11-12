@@ -1,0 +1,11 @@
+{
+  "name": "porttag",
+  "version": "0.1.0",
+  "description": "Local services by name, not port number: http://home.localhost -> 127.0.0.1:3000",
+  "repository": "github:sayantan94/porttag",
+  "keywords": ["localhost", "port", "proxy", "dev", "cli"],
+  "bin": { "porttag": "cli.js" },
+  "scripts": { "test": "node --test" },
+  "engines": { "node": ">=20" },
+  "license": "MIT"
+}
