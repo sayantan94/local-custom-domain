@@ -19,7 +19,11 @@ const HOSTS_BEGIN = '# >>> local-custom-domain >>>';
 const HOSTS_END = '# <<< local-custom-domain <<<';
 const LABEL = 'com.local-custom-domain.proxy';
 const PLIST = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-const FILES = ['cli.js', 'console.html']; // everything the background proxy needs
+const FILES = ['cli.js', 'console.html'];
+const LIST_FILE = path.join(HOME, 'domains.list'); // one domain per line, read by the root helper
+const HELPER_LABEL = 'com.local-custom-domain.hosts';
+const HELPER_PLIST = `/Library/LaunchDaemons/${HELPER_LABEL}.plist`;
+const HELPER_DIR = '/Library/Application Support/local-custom-domain'; // everything the background proxy needs
 const ADMIN_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 const DNS_LABEL_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 // Browsers refuse plain http:// on these endings (they are on the HSTS preload list).
@@ -94,7 +98,12 @@ function saveRoutes(routes) {
   const tmp = `${ROUTES_FILE}.${process.pid}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(routes, null, 2) + '\n');
   fs.renameSync(tmp, ROUTES_FILE);
+  // Written in place (not renamed) so the helper's file watch keeps firing.
+  fs.writeFileSync(LIST_FILE, Object.keys(routes).sort().map((d) => d + '\n').join(''));
 }
+
+// True once "sudo lcd hosts --auto" has installed the helper that keeps the hosts file in step.
+const autoSetupOn = () => !process.env.LCD_HOSTS_FILE && fs.existsSync(HELPER_PLIST);
 
 // ---------- name resolution (/etc/hosts) ----------
 
@@ -284,7 +293,7 @@ async function handleConsole(req, res, consoleFile) {
     if (url.pathname === '/') return send(res, 200, fs.readFileSync(consoleFile));
     if (url.pathname === '/__lcd') return send(res, 200, CMD, 'text/plain');
     if (url.pathname === '/api/domains') {
-      return sendJson(res, 200, { domains: await describeDomains(routes), command: CMD, proxyPort: PROXY_PORT });
+      return sendJson(res, 200, { domains: await describeDomains(routes), command: CMD, proxyPort: PROXY_PORT, autoSetup: autoSetupOn() });
     }
     return send(res, 404, errorPage('Page not found', 'There is nothing at this address.'));
   }
@@ -398,6 +407,7 @@ async function noteIfProxyDown() {
 
 // Make the name resolve for every program. Needs admin rights, so ask for them when we can.
 function ensureResolves(domain) {
+  if (autoSetupOn()) return console.log(`${domain} will open in a few seconds (automatic setup is on)`);
   try {
     if (syncHosts()) console.log(`${HOSTS_FILE} updated`);
     return;
@@ -409,7 +419,7 @@ function ensureResolves(domain) {
     const r = spawnSync('sudo', ['env', `LCD_HOME=${HOME}`, process.execPath, __filename, 'hosts'], { stdio: 'inherit' });
     if (r.status === 0) return;
   }
-  console.log(`one more step, so this computer knows the name:  sudo ${CMD} hosts`);
+  console.log(`one more step, so this computer knows the name:  sudo ${CMD} hosts\n(or once and for all:  sudo ${CMD} hosts --auto)`);
 }
 
 async function cmdAdd(args) {
@@ -541,13 +551,69 @@ function cmdUninstall() {
   console.log('uninstalled the background proxy (your domain names are kept)');
 }
 
-function cmdHosts() {
+function cmdHosts(args) {
+  if (args[0] === '--auto') return installHelper();
+  if (args[0] === '--auto-off') return removeHelper();
+  if (args.length) fail(`usage: ${CMD} hosts [--auto | --auto-off]`);
   try {
     console.log(syncHosts() ? `${HOSTS_FILE} updated` : `${HOSTS_FILE} is already up to date`);
   } catch (err) {
     if (!isDenied(err)) throw err;
     fail(`${HOSTS_FILE} needs admin rights. Run:  sudo ${CMD} hosts`);
   }
+}
+
+// One-time setup: a small root helper that copies domains.list into the hosts file
+// whenever it changes, so adding a domain never needs a password again.
+// The helper is a root-owned shell script using only system tools; nothing the
+// user account can modify is ever executed as root.
+function installHelper() {
+  if (process.platform !== 'darwin') fail('automatic setup only supports macOS');
+  if (process.getuid() !== 0) fail(`this needs admin rights. Run:  sudo ${CMD} hosts --auto`);
+  if (HOME.startsWith('/var/root')) fail(`could not tell whose domain names to use. Run:  sudo LCD_HOME="$HOME/.local-custom-domain" ${CMD} hosts --auto`);
+
+  // make sure the list exists and still belongs to the user, not to root
+  fs.mkdirSync(HOME, { recursive: true });
+  fs.writeFileSync(LIST_FILE, Object.keys(loadRoutes()).sort().map((d) => d + '\n').join(''));
+  if (process.env.SUDO_UID) {
+    for (const f of [HOME, LIST_FILE]) fs.chownSync(f, Number(process.env.SUDO_UID), Number(process.env.SUDO_GID));
+  }
+
+  const script = path.join(HELPER_DIR, 'sync-hosts.sh');
+  fs.mkdirSync(HELPER_DIR, { recursive: true, mode: 0o755 });
+  fs.copyFileSync(path.join(__dirname, 'sync-hosts.sh'), script);
+  fs.chownSync(script, 0, 0);
+  fs.chmodSync(script, 0o755);
+
+  const str = (v) => `<string>${esc(v)}</string>`;
+  fs.writeFileSync(
+    HELPER_PLIST,
+    `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key>${str(HELPER_LABEL)}
+  <key>ProgramArguments</key><array>${str('/bin/sh')}${str(script)}${str(LIST_FILE)}</array>
+  <key>WatchPaths</key><array>${str(LIST_FILE)}</array>
+  <key>RunAtLoad</key><true/>
+</dict></plist>
+`,
+    { mode: 0o644 },
+  );
+  try {
+    execFileSync('launchctl', ['bootout', `system/${HELPER_LABEL}`], { stdio: 'ignore' });
+  } catch {}
+  execFileSync('launchctl', ['bootstrap', 'system', HELPER_PLIST], { stdio: 'inherit' });
+  console.log(`automatic setup is on: new domain names are added to ${HOSTS_FILE} by themselves.\nturn it off with:  sudo ${CMD} hosts --auto-off`);
+}
+
+function removeHelper() {
+  if (process.getuid() !== 0) fail(`this needs admin rights. Run:  sudo ${CMD} hosts --auto-off`);
+  try {
+    execFileSync('launchctl', ['bootout', `system/${HELPER_LABEL}`], { stdio: 'ignore' });
+  } catch {}
+  fs.rmSync(HELPER_PLIST, { force: true });
+  fs.rmSync(HELPER_DIR, { recursive: true, force: true });
+  console.log(`automatic setup is off (entries already in ${HOSTS_FILE} are kept)`);
 }
 
 function cmdOpen() {
@@ -567,6 +633,8 @@ const HELP = `${CMD} (local-custom-domain) - custom domain names for services on
   ${CMD} serve                        run the proxy in the foreground
   ${CMD} install | uninstall          keep the proxy running in the background (macOS)
   ${CMD} hosts                        write all names to /etc/hosts (needs sudo)
+  ${CMD} hosts --auto                 one-time setup (sudo): names you add later set
+                                   themselves up; undo with --auto-off
 
 examples
   ${CMD} add shop.test 3000           then open http://shop.test
@@ -586,7 +654,7 @@ async function main() {
     case 'serve': return serve();
     case 'install': return cmdInstall();
     case 'uninstall': return cmdUninstall();
-    case 'hosts': return cmdHosts();
+    case 'hosts': return cmdHosts(args);
     case undefined: case 'help': case '-h': case '--help': return void process.stdout.write(HELP);
     default: fail(`unknown command "${cmd}" (try "${CMD} help")`);
   }

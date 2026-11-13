@@ -10,6 +10,7 @@ const REMOVE_ICON =
 
 let domains = []
 let command = "lcd"
+let autoSetup = false
 const rows = new Map()
 
 async function api(method, path, body) {
@@ -29,7 +30,7 @@ const save = (domain, port, create = false) => api("POST", "/api/domains", { dom
 
 function noteFor(d) {
   if (d.warning) return ["todo", d.warning]
-  if (d.dns === "pending") return ["todo", "Needs the one-time setup above"]
+  if (d.dns === "pending") return ["todo", autoSetup ? "Setting up, ready in a few seconds" : "Needs the one-time setup above"]
   if (!d.answering) return ["down", `Nothing is running on port ${d.port}`]
   return ["ok", "Working"]
 }
@@ -111,11 +112,11 @@ function render() {
 
   $("empty").hidden = domains.length > 0
   const pending = domains.filter((d) => d.dns === "pending").map((d) => d.domain)
-  $("setup").hidden = pending.length === 0
-  if (pending.length) {
+  $("setup").hidden = pending.length === 0 || autoSetup
+  if (pending.length && !autoSetup) {
     const names = pending.length === 1 ? `${pending[0]} needs` : `${pending.length} domain names need`
-    $("setup-text").textContent = `${names} a one-time setup so this computer knows the name. Run this in a terminal:`
-    $("setup-command").textContent = `sudo ${command} hosts`
+    $("setup-text").textContent = `${names} a one-time setup so this computer knows the name. Run this once in a terminal. After that, every name you add sets itself up:`
+    $("setup-command").textContent = `sudo ${command} hosts --auto`
   }
 }
 
@@ -124,6 +125,7 @@ async function load() {
     const data = await api("GET", "/api/domains")
     domains = data.domains
     command = data.command
+    autoSetup = Boolean(data.autoSetup)
     $("offline").hidden = true
   } catch {
     $("offline").hidden = false

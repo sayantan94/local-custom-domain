@@ -31,6 +31,7 @@
   "files": [
     "cli.js",
     "console.html",
-    "setup.sh"
+    "setup.sh",
+    "sync-hosts.sh"
   ]
 }

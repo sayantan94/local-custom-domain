@@ -163,3 +163,27 @@ test('bad domains and ports are rejected; https-only endings warn', () => {
   assert.throws(() => cli('add', 'ok.test', '99999'));
   assert.match(cli('add', 'site.dev', '3000'), /warning: .*https/);
 });
+
+test('the root helper only copies plain domain names into the hosts file', () => {
+  const list = path.join(tmp, 'helper.list');
+  const hosts = path.join(tmp, 'helper.hosts');
+  const run = () => execFileSync('/bin/sh', [path.join(__dirname, 'sync-hosts.sh'), list, hosts]);
+  fs.writeFileSync(hosts, '127.0.0.1 localhost\n::1 localhost\n');
+  fs.writeFileSync(list, 'shop.test\napi.myapp.test\nevil.test 10.0.0.1\n10.0.0.1 bank.test\nUPPER.test\n../etc\nnodot\n# >>> x\n');
+  run();
+  assert.strictEqual(
+    fs.readFileSync(hosts, 'utf8'),
+    '127.0.0.1 localhost\n::1 localhost\n# >>> local-custom-domain >>>\n127.0.0.1 api.myapp.test\n127.0.0.1 shop.test\n# <<< local-custom-domain <<<\n',
+  );
+  run(); // running again changes nothing
+  assert.strictEqual(fs.readFileSync(hosts, 'utf8').match(/shop\.test/g).length, 1);
+  fs.writeFileSync(list, '');
+  run();
+  assert.strictEqual(fs.readFileSync(hosts, 'utf8'), '127.0.0.1 localhost\n::1 localhost\n');
+});
+
+test('saving domains keeps the helper list in step', () => {
+  const list = fs.readFileSync(path.join(env.LCD_HOME, 'domains.list'), 'utf8').split('\n');
+  assert.ok(list.includes('shop.test'));
+});
+

@@ -37,7 +37,9 @@ lcd rm shop.test
 ## Good to know
 
 - Works with any HTTP service, WebSockets included. Nothing to configure in the service.
-- A new domain is written to `/etc/hosts`, which asks for your password once. `.localhost` names skip this in browsers and curl; run `sudo lcd hosts` if other programs need them too.
+- A domain that doesn't end in `.localhost` has to be written to `/etc/hosts`, which needs admin rights. Run `sudo lcd hosts --auto` once and every name you add later sets itself up within a few seconds (`sudo lcd hosts --auto-off` undoes it). Without it, run `sudo lcd hosts` after adding names.
+- The automatic setup installs a small root helper that copies your list of names into `/etc/hosts`, always pointing at `127.0.0.1`. It runs only a root-owned shell script, never anything your user account can change.
+- `.localhost` names need no setup in browsers and curl.
 - Use `.test` for made-up names. Browsers force https on `.dev` and `.app`, so those won't open.
 - HTTP only. The proxy listens on port 80 and accepts connections from your machine only.
 - `lcd uninstall` stops the background proxy.
