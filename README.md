@@ -8,6 +8,10 @@ lcd add shop.test 3000
 
 Now `http://shop.test` opens whatever runs on port 3000.
 
+## How it works
+
+A small proxy runs on **port 80** of your computer. Each domain name points at `127.0.0.1`, so the browser reaches the proxy, which passes the request to your service's port. Nothing else may be using port 80. To run the proxy on another port, start it with `LCD_PORT=8080 lcd serve` and open `http://shop.test:8080`.
+
 ## Setup
 
 Needs Node 20+ and macOS.
