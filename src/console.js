@@ -175,12 +175,16 @@ $("copy").addEventListener("action", async () => {
   }
 })
 
-const systemDark = matchMedia("(prefers-color-scheme: dark)")
-function currentTheme() {
-  return document.documentElement.style.colorScheme || (systemDark.matches ? "dark" : "light")
-}
+const MOON =
+  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z"/></svg>'
+const SUN =
+  '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="2.9"/><path d="M8 1.5v1.4M8 13.1v1.4M1.5 8h1.4M13.1 8h1.4M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>'
+const currentTheme = () => (document.documentElement.style.colorScheme === "dark" ? "dark" : "light")
 function showThemeButton() {
-  $("theme").textContent = currentTheme() === "dark" ? "Light mode" : "Dark mode"
+  const dark = currentTheme() === "dark"
+  $("theme").innerHTML = dark ? SUN : MOON
+  $("theme").setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode")
+  $("theme").title = dark ? "Light mode" : "Dark mode"
 }
 $("theme").addEventListener("click", () => {
   const next = currentTheme() === "dark" ? "light" : "dark"
@@ -190,7 +194,6 @@ $("theme").addEventListener("click", () => {
   } catch {}
   showThemeButton()
 })
-systemDark.addEventListener("change", showThemeButton)
 showThemeButton()
 
 load()

@@ -129,12 +129,15 @@ code { font: 0.8125rem var(--ui-font-mono); }
 .bar span { display: flex; align-items: center; gap: 0.625rem; }
 .bar span::before { content: ""; width: 0.625rem; height: 0.625rem; border-radius: 2px; background: var(--ui-primary); }
 #theme {
-  padding: 0.25rem 0.75rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   border: 1px solid rgb(255 255 255 / 0.55);
-  border-radius: 1.25rem;
+  border-radius: 50%;
   background: transparent;
   color: #fff;
-  font: 700 0.8125rem var(--ui-font-sans);
   cursor: pointer;
 }
 #theme:hover { background: rgb(255 255 255 / 0.12); }
