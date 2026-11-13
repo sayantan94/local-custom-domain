@@ -113,6 +113,7 @@ function render() {
 
   $("empty").hidden = domains.length > 0
   $("https-tip").hidden = httpsOn || domains.length === 0
+  $("scheme").textContent = httpsOn ? "https://" : "http://"
   $("https-command").textContent = `${command} https`
   const pending = domains.filter((d) => d.dns === "pending").map((d) => d.domain)
   $("setup").hidden = pending.length === 0 || autoSetup
