@@ -175,6 +175,24 @@ $("copy").addEventListener("action", async () => {
   }
 })
 
+const systemDark = matchMedia("(prefers-color-scheme: dark)")
+function currentTheme() {
+  return document.documentElement.style.colorScheme || (systemDark.matches ? "dark" : "light")
+}
+function showThemeButton() {
+  $("theme").textContent = currentTheme() === "dark" ? "Light mode" : "Dark mode"
+}
+$("theme").addEventListener("click", () => {
+  const next = currentTheme() === "dark" ? "light" : "dark"
+  document.documentElement.style.colorScheme = next
+  try {
+    localStorage.setItem("theme", next)
+  } catch {}
+  showThemeButton()
+})
+systemDark.addEventListener("change", showThemeButton)
+showThemeButton()
+
 load()
 setInterval(() => {
   if (!document.hidden) load()
