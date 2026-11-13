@@ -1,11 +1,36 @@
 {
-  "name": "porttag",
+  "name": "local-custom-domain",
   "version": "0.1.0",
-  "description": "Local services by name, not port number: http://home.localhost -> 127.0.0.1:3000",
-  "repository": "github:sayantan94/porttag",
-  "keywords": ["localhost", "port", "proxy", "dev", "cli"],
-  "bin": { "porttag": "cli.js" },
-  "scripts": { "test": "node --test" },
-  "engines": { "node": ">=20" },
-  "license": "MIT"
+  "description": "Custom domain names for services on your own computer: http://shop.test -> 127.0.0.1:3000",
+  "repository": "github:sayantan94/local-custom-domain",
+  "keywords": [
+    "localhost",
+    "custom-domain",
+    "local-domain",
+    "proxy",
+    "dev",
+    "cli"
+  ],
+  "bin": {
+    "lcd": "cli.js",
+    "local-custom-domain": "cli.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@ui-sdk/core": "^0.1.0-beta.1",
+    "@ui-sdk/web": "^0.1.0-beta.1",
+    "esbuild": "^0.28.2"
+  },
+  "files": [
+    "cli.js",
+    "console.html",
+    "setup.sh"
+  ]
 }

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Local custom domain</title>
+<style>/*CSS*/</style>
+
+<main>
+  <header>
+    <h1>Local custom domain</h1>
+    <p>Open the services running on this computer by name instead of port number.</p>
+  </header>
+
+  <form id="add" novalidate>
+    <ui-field name="domain" id="domain-field">
+      <ui-field-label>Domain name</ui-field-label>
+      <ui-input-group>
+        <span>http://</span>
+        <ui-input><input id="domain" placeholder="shop.test" autocomplete="off" autocapitalize="off" spellcheck="false"></ui-input>
+      </ui-input-group>
+    </ui-field>
+    <ui-field name="port" id="port-field">
+      <ui-field-label>Port</ui-field-label>
+      <ui-input><input id="port" inputmode="numeric" placeholder="3000" autocomplete="off"></ui-input>
+    </ui-field>
+    <ui-button id="add-button"><button type="submit" data-variant="solid">Add</button></ui-button>
+  </form>
+  <p class="hint">Any name works. A single word such as <code>shop</code> becomes <code>shop.localhost</code>, which needs no setup.</p>
+
+  <section id="setup" hidden>
+    <p id="setup-text"></p>
+    <div><code id="setup-command"></code><ui-button id="copy"><button>Copy</button></ui-button></div>
+  </section>
+
+  <section aria-labelledby="list-title">
+    <h2 id="list-title">Your domain names</h2>
+    <ul id="list"></ul>
+    <p id="empty" hidden>None yet. Add your first one above.</p>
+    <p id="offline" hidden>Cannot reach the proxy. Start it with <code>lcd install</code>, then reload.</p>
+  </section>
+</main>
+
+<ui-toast-region side="bottom" align="center">
+  <template>
+    <ui-toast>
+      <ui-toast-title></ui-toast-title>
+      <ui-toast-action><button data-variant="solid"></button></ui-toast-action>
+    </ui-toast>
+  </template>
+</ui-toast-region>
+
+<script type="module">/*JS*/</script>
+</html>
