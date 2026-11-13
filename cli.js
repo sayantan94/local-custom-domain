@@ -6,7 +6,7 @@
 const { CMD, fail } = require('./lib/config');
 const { serve } = require('./lib/server');
 const { cmdInstall, cmdUninstall } = require('./lib/service');
-const { cmdAdd, cmdRm, cmdLs, cmdRun, cmdHosts, cmdOpen, cmdHttps } = require('./lib/commands');
+const { cmdAdd, cmdRm, cmdLs, cmdRun, cmdHosts, cmdOpen, cmdHttps, cmdSetup } = require('./lib/commands');
 
 const HELP = `${CMD} (local-custom-domain) - custom domain names for services on your computer
 
@@ -18,6 +18,8 @@ const HELP = `${CMD} (local-custom-domain) - custom domain names for services on
   ${CMD} open                         open the console at http://localhost
   ${CMD} run <domain> -- <command>    start a service on a free port under <domain>
                                    (port is passed as $PORT and replaces {port})
+  ${CMD} setup                        first-time setup: background proxy, https and
+                                   automatic name setup (asks for your password)
   ${CMD} serve                        run the proxy in the foreground
   ${CMD} install | uninstall          keep the proxy running in the background (macOS)
   ${CMD} hosts                        write all names to /etc/hosts (needs sudo)
@@ -42,6 +44,7 @@ async function main() {
     case 'open': return cmdOpen();
     case 'run': return cmdRun(args);
     case 'serve': return serve();
+    case 'setup': return cmdSetup();
     case 'install': return cmdInstall();
     case 'uninstall': return cmdUninstall();
     case 'hosts': return cmdHosts(args);

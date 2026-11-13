@@ -1,7 +1,7 @@
 {
   "name": "local-custom-domain",
-  "version": "0.1.0",
-  "description": "Custom domain names for services on your own computer: http://shop.test -> 127.0.0.1:3000",
+  "version": "0.2.0",
+  "description": "Custom domain names with https for services on your own computer: https://shop.test -> 127.0.0.1:3000",
   "repository": "github:sayantan94/local-custom-domain",
   "keywords": [
     "localhost",

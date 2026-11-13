@@ -17,11 +17,13 @@ A small proxy runs on **ports 80 (http) and 443 (https)** of your computer. Each
 Needs Node 20+ and macOS.
 
 ```
-git clone https://github.com/sayantan94/local-custom-domain && cd local-custom-domain
-./setup.sh
+npm install -g local-custom-domain
+lcd setup
 ```
 
-Setup asks for your password twice: once for macOS to trust the local certificate authority (https), once to let new domain names set themselves up. Both steps can be skipped and run later (`lcd https`, `sudo lcd hosts --auto`).
+`lcd setup` starts the background proxy and then asks for your password twice: once for macOS to trust the local certificate authority (https), once to let new domain names set themselves up. Either step can be skipped and run later (`lcd https`, `sudo lcd hosts --auto`).
+
+From a clone of this repo, run `./setup.sh` instead.
 
 ## Use
 
@@ -35,6 +37,16 @@ lcd run web.test -- vite --port {port}
 lcd ls                            # domain names, and whether the proxy is up
 lcd rm shop.test
 ```
+
+## https
+
+Browsers mark plain http pages "Not secure". `lcd https` (part of `lcd setup`) fixes that:
+
+1. It creates a certificate authority that exists only on your computer and asks macOS to trust it.
+2. The proxy then makes a certificate for each domain the first time it is opened, and renews it before it expires.
+3. Opening `http://shop.test` in a browser moves you to `https://shop.test`. Your service keeps speaking plain http to the proxy, so nothing changes in it.
+
+`lcd https --off` removes the authority and its certificates.
 
 ## Good to know
 
