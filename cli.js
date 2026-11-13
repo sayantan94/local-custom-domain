@@ -19,7 +19,7 @@ const HOSTS_BEGIN = '# >>> local-custom-domain >>>';
 const HOSTS_END = '# <<< local-custom-domain <<<';
 const LABEL = 'com.local-custom-domain.proxy';
 const PLIST = path.join(os.homedir(), 'Library', 'LaunchAgents', `${LABEL}.plist`);
-const FILES = ['cli.js', 'console.html'];
+const FILES = ['cli.js', 'console.html', 'sync-hosts.sh'];
 const LIST_FILE = path.join(HOME, 'domains.list'); // one domain per line, read by the root helper
 const HELPER_LABEL = 'com.local-custom-domain.hosts';
 const HELPER_PLIST = `/Library/LaunchDaemons/${HELPER_LABEL}.plist`;
@@ -518,7 +518,9 @@ function cmdInstall() {
   fs.mkdirSync(path.dirname(PLIST), { recursive: true });
   // launchd agents may not read ~/Documents, ~/Desktop etc. (macOS privacy rules),
   // so the background proxy runs from a copy kept next to the routes file.
-  for (const f of FILES) fs.copyFileSync(path.join(__dirname, f), path.join(HOME, f));
+  if (path.resolve(__dirname) !== path.resolve(HOME)) {
+    for (const f of FILES) fs.copyFileSync(path.join(__dirname, f), path.join(HOME, f));
+  }
   const log = path.join(HOME, 'proxy.log');
   const str = (s) => `<string>${esc(s)}</string>`;
   fs.writeFileSync(
