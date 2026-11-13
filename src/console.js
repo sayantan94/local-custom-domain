@@ -27,7 +27,7 @@ async function api(method, path, body) {
   return data
 }
 
-const save = (domain, port, create = false) => api("POST", "/api/domains", { domain, port, create })
+const save = (domain, port, { create = false, scheme } = {}) => api("POST", "/api/domains", { domain, port, create, scheme })
 
 function noteFor(d) {
   if (d.warning) return ["todo", d.warning]
@@ -40,12 +40,24 @@ function createRow(d) {
   const li = document.createElement("li")
   li.innerHTML = `
     <div class="name"><a target="_blank" rel="noopener"></a><p class="note"></p></div>
+    <select class="row-scheme"><option value="https">https</option><option value="http">http</option></select>
     <label class="target"><span>127.0.0.1:</span><ui-input><input inputmode="numeric" autocomplete="off"></ui-input></label>
     <ui-button><button>${REMOVE_ICON}</button></ui-button>`
   const link = li.querySelector("a")
   link.href = d.url
   link.textContent = d.domain
   const port = li.querySelector("input")
+  const scheme = li.querySelector(".row-scheme")
+  scheme.setAttribute("aria-label", `http or https for ${d.domain}`)
+  scheme.addEventListener("change", async () => {
+    try {
+      const saved = await save(d.domain, Number(li.dataset.port), { scheme: scheme.value })
+      toast(`${saved.domain} now opens over ${saved.scheme}`)
+    } catch (error) {
+      toast.error(error.message)
+    }
+    await load()
+  })
   port.setAttribute("aria-label", `Port for ${d.domain}`)
   li.querySelector("button").setAttribute("aria-label", `Remove ${d.domain}`)
 
@@ -76,7 +88,7 @@ function createRow(d) {
         action: {
           label: "Undo",
           onAction: async () => {
-            await save(d.domain, removedPort)
+            await save(d.domain, removedPort, { scheme: li.dataset.scheme })
             await load()
           },
         },
@@ -107,13 +119,19 @@ function render() {
     note.dataset.state = state
     note.textContent = text
     li.dataset.port = d.port
+    li.dataset.scheme = d.scheme
+    li.querySelector("a").href = d.url
+    const rowScheme = li.querySelector(".row-scheme")
+    rowScheme.hidden = !httpsOn
+    if (document.activeElement !== rowScheme) rowScheme.value = d.scheme
     const port = li.querySelector("input")
     if (document.activeElement !== port) port.value = d.port
   })
 
   $("empty").hidden = domains.length > 0
   $("https-tip").hidden = httpsOn || domains.length === 0
-  $("scheme").textContent = httpsOn ? "https://" : "http://"
+  $("scheme").hidden = !httpsOn
+  $("scheme-text").hidden = httpsOn
   $("https-command").textContent = `${command} https`
   const pending = domains.filter((d) => d.dns === "pending").map((d) => d.domain)
   $("setup").hidden = pending.length === 0 || autoSetup
@@ -161,7 +179,7 @@ $("add").addEventListener("submit", async (event) => {
   setError("port", port ? "" : "Enter a port")
   if (!domain || !port) return (domain ? $("port") : $("domain")).focus()
   try {
-    const saved = await save(domain, Number(port), true)
+    const saved = await save(domain, Number(port), { create: true, scheme: httpsOn ? $("scheme").value : undefined })
     $("add").reset()
     $("domain").focus()
     await load()

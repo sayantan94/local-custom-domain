@@ -187,3 +187,8 @@ test('saving domains keeps the helper list in step', () => {
   assert.ok(list.includes('shop.test'));
 });
 
+test('https cannot be chosen for a domain before https is set up', () => {
+  assert.throws(() => cli('add', 'secure.test', '3000', '--https'), /https is not set up yet/);
+  assert.match(cli('add', 'secure.test', '3000', '--http'), /http:\/\/secure\.test/);
+});
+

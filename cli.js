@@ -10,7 +10,8 @@ const { cmdAdd, cmdRm, cmdLs, cmdRun, cmdHosts, cmdOpen, cmdHttps, cmdSetup } = 
 
 const HELP = `${CMD} (local-custom-domain) - custom domain names for services on your computer
 
-  ${CMD} add <domain> <port>          http://<domain> -> 127.0.0.1:<port>
+  ${CMD} add <domain> <port>          <domain> -> 127.0.0.1:<port>
+                                   add --http or --https to choose per domain
                                    any domain works (shop.test, api.myapp.test);
                                    a bare name like "shop" means shop.localhost
   ${CMD} rm <domain>                  remove a domain name

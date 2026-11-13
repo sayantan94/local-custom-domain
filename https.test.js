@@ -98,3 +98,33 @@ test('the console still answers on http://localhost and reports https as on', as
   const res = await request(http, HTTP_PORT, `localhost:${HTTP_PORT}`, '/api/domains');
   assert.strictEqual(JSON.parse(res.body).https, true);
 });
+
+test('a domain can be kept on http while https is on, and switched back', async () => {
+  assert.match(cli('add', 'plain.test', String(upstreamPort), '--http'), new RegExp(`http://plain\\.test:${HTTP_PORT}`));
+  const nav = await request(http, HTTP_PORT, 'plain.test', '/', { headers: { 'upgrade-insecure-requests': '1' } });
+  assert.strictEqual(nav.status, 200); // not redirected
+  assert.match(cli('add', 'shop.test', String(upstreamPort)), /https:\/\/shop\.test/); // re-adding keeps https
+  assert.match(cli('ls'), new RegExp(`http://plain\\.test:${HTTP_PORT}`)); // and keeps the http choice of others
+  assert.match(cli('add', 'plain.test', String(upstreamPort), '--https'), /https:\/\/plain\.test/);
+});
+
+test('the console API accepts a scheme per domain', async () => {
+  const post = (body) =>
+    new Promise((resolve, reject) => {
+      const req = http.request(
+        { host: '127.0.0.1', port: HTTP_PORT, method: 'POST', path: '/api/domains', headers: { host: `localhost:${HTTP_PORT}`, origin: `http://localhost:${HTTP_PORT}`, 'content-type': 'application/json' } },
+        (res) => {
+          let text = '';
+          res.on('data', (d) => (text += d));
+          res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(text) }));
+        },
+      );
+      req.on('error', reject);
+      req.end(JSON.stringify(body));
+    });
+  assert.strictEqual((await post({ domain: 'web.test', port: upstreamPort, scheme: 'http' })).body.scheme, 'http');
+  assert.strictEqual((await post({ domain: 'web.test', port: upstreamPort })).body.scheme, 'http'); // unchanged when not given
+  assert.strictEqual((await post({ domain: 'web.test', port: upstreamPort, scheme: 'https' })).body.scheme, 'https');
+  assert.strictEqual((await post({ domain: 'web.test', port: upstreamPort, scheme: 'ftp' })).status, 400);
+});
+

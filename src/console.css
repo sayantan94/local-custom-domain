@@ -151,3 +151,17 @@ code { font: 0.8125rem var(--ui-font-mono); }
   border-color: var(--link);
   background: light-dark(#f0fbff, #001129);
 }
+
+select {
+  height: calc(var(--ui-spacing) * 8);
+  padding: 0 0.25rem;
+  border: 1px solid var(--ui-input);
+  border-radius: var(--ui-radius);
+  background: var(--ui-background);
+  color: var(--ui-foreground);
+  font: 0.8125rem var(--ui-font-mono);
+}
+select:focus-visible { outline: 2px solid var(--ui-ring); outline-offset: 1px; }
+#add ui-input-group select { height: 100%; margin: 0 0.4rem 0 calc(var(--ui-spacing) * -1.5); padding: 0; border: 0; background: transparent; font-size: var(--ui-font-size); color: var(--ui-muted-foreground); }
+#list li { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+@media (max-width: 34rem) { #list li { grid-template-columns: minmax(0, 1fr) auto auto; } }

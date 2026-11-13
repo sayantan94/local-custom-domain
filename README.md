@@ -32,6 +32,7 @@ Open `http://localhost` to add, change and remove domain names in the browser, o
 ```
 lcd add shop.test 3000            # any domain: https://shop.test -> 127.0.0.1:3000
 lcd add shop 3000                 # one word means shop.localhost (no password needed)
+lcd add old.test 4000 --http      # keep one domain on plain http (or --https)
 lcd run api.test -- npm run dev   # picks a free port, passes it as $PORT
 lcd run web.test -- vite --port {port}
 lcd ls                            # domain names, and whether the proxy is up
@@ -46,7 +47,9 @@ Browsers mark plain http pages "Not secure". `lcd https` (part of `lcd setup`) f
 2. The proxy then makes a certificate for each domain the first time it is opened, and renews it before it expires.
 3. Opening `http://shop.test` in a browser moves you to `https://shop.test`. Your service keeps speaking plain http to the proxy, so nothing changes in it.
 
-`lcd https --off` removes the authority and its certificates.
+Each domain can be https or http: choose it in the console's dropdown, or with `--http` / `--https` on `lcd add`. New domains default to https once it is set up.
+
+What you are agreeing to: your computer will trust a certificate authority that was created on, and never leaves, your machine. macOS asks for your password to allow it. `lcd https --off` removes the authority and its certificates.
 
 ## Good to know
 

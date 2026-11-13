@@ -17,7 +17,8 @@
     <ui-field name="domain" id="domain-field">
       <ui-field-label>Domain name</ui-field-label>
       <ui-input-group>
-        <span id="scheme">http://</span>
+        <span id="scheme-text">http://</span>
+        <select id="scheme" aria-label="http or https" hidden><option value="https">https://</option><option value="http">http://</option></select>
         <ui-input><input id="domain" placeholder="shop.test" autocomplete="off" autocapitalize="off" spellcheck="false"></ui-input>
       </ui-input-group>
     </ui-field>
@@ -35,7 +36,7 @@
   </section>
 
   <section id="https-tip" hidden>
-    <p>Browsers label http pages “Not secure”. To open your domain names over https, run this once in a terminal:</p>
+    <p>Browsers label http pages “Not secure”. To open your domain names over https, run this once in a terminal. macOS will ask for your password, because this computer has to trust a certificate authority that exists only on this machine:</p>
     <div><code id="https-command"></code><ui-button id="copy-https"><button>Copy</button></ui-button></div>
   </section>
 
