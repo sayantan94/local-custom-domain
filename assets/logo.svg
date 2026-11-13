@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" width="520" height="120" role="img" aria-label="local custom domain">
+  <rect width="520" height="120" rx="22" fill="#232f3e"/>
+  <rect x="28" y="40" width="72" height="40" rx="20" fill="#ffffff"/>
+  <circle cx="49" cy="60" r="9" fill="#ff9900"/>
+  <rect x="65" y="56" width="24" height="8" rx="4" fill="#232f3e"/>
+  <text x="122" y="60" fill="#ffffff" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="-0.6">local custom domain</text>
+  <text x="123" y="87" fill="#c3cad5" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="16">https://shop.test  →  127.0.0.1:3000</text>
+</svg>

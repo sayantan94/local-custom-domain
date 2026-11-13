@@ -30,6 +30,7 @@
   },
   "files": [
     "cli.js",
+    "lib",
     "console.html",
     "setup.sh",
     "sync-hosts.sh"

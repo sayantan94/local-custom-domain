@@ -11,6 +11,7 @@ const REMOVE_ICON =
 let domains = []
 let command = "lcd"
 let autoSetup = false
+let httpsOn = false
 const rows = new Map()
 
 async function api(method, path, body) {
@@ -111,6 +112,8 @@ function render() {
   })
 
   $("empty").hidden = domains.length > 0
+  $("https-tip").hidden = httpsOn || domains.length === 0
+  $("https-command").textContent = `${command} https`
   const pending = domains.filter((d) => d.dns === "pending").map((d) => d.domain)
   $("setup").hidden = pending.length === 0 || autoSetup
   if (pending.length && !autoSetup) {
@@ -126,6 +129,7 @@ async function load() {
     domains = data.domains
     command = data.command
     autoSetup = Boolean(data.autoSetup)
+    httpsOn = Boolean(data.https)
     $("offline").hidden = true
   } catch {
     $("offline").hidden = false
@@ -167,15 +171,18 @@ $("add").addEventListener("submit", async (event) => {
   }
 })
 
-$("copy").addEventListener("action", async () => {
-  const text = $("setup-command").textContent
-  try {
-    await navigator.clipboard.writeText(text)
-    toast("Copied. Paste it into a terminal.")
-  } catch {
-    toast.error("Could not copy. Select the command and copy it by hand.")
-  }
-})
+function copyOnPress(buttonId, sourceId) {
+  $(buttonId).addEventListener("action", async () => {
+    try {
+      await navigator.clipboard.writeText($(sourceId).textContent)
+      toast("Copied. Paste it into a terminal.")
+    } catch {
+      toast.error("Could not copy. Select the command and copy it by hand.")
+    }
+  })
+}
+copyOnPress("copy", "setup-command")
+copyOnPress("copy-https", "https-command")
 
 const MOON =
   '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1Z"/></svg>'

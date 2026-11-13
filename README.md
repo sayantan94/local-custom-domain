@@ -1,16 +1,16 @@
-# local-custom-domain
+<p align="center"><img src="assets/logo.svg" alt="local custom domain" width="460"></p>
 
-Custom domain names for the services on your own computer.
+Custom domain names for the services on your own computer, with https.
 
 ```
 lcd add shop.test 3000
 ```
 
-Now `http://shop.test` opens whatever runs on port 3000.
+Now `https://shop.test` opens whatever runs on port 3000.
 
 ## How it works
 
-A small proxy runs on **port 80** of your computer. Each domain name points at `127.0.0.1`, so the browser reaches the proxy, which passes the request to your service's port. Nothing else may be using port 80. To run the proxy on another port, start it with `LCD_PORT=8080 lcd serve` and open `http://shop.test:8080`.
+A small proxy runs on **ports 80 (http) and 443 (https)** of your computer. Each domain name points at `127.0.0.1`, so the browser reaches the proxy, which passes the request to your service's port. Nothing else may be using those ports. To use other ports, start it with `LCD_PORT=8080 LCD_HTTPS_PORT=8443 lcd serve` and open `https://shop.test:8443`.
 
 ## Setup
 
@@ -21,12 +21,14 @@ git clone https://github.com/sayantan94/local-custom-domain && cd local-custom-d
 ./setup.sh
 ```
 
+Setup asks for your password twice: once for macOS to trust the local certificate authority (https), once to let new domain names set themselves up. Both steps can be skipped and run later (`lcd https`, `sudo lcd hosts --auto`).
+
 ## Use
 
 Open `http://localhost` to add, change and remove domain names in the browser, or use the command:
 
 ```
-lcd add shop.test 3000            # any domain: http://shop.test -> 127.0.0.1:3000
+lcd add shop.test 3000            # any domain: https://shop.test -> 127.0.0.1:3000
 lcd add shop 3000                 # one word means shop.localhost (no password needed)
 lcd run api.test -- npm run dev   # picks a free port, passes it as $PORT
 lcd run web.test -- vite --port {port}
@@ -40,8 +42,11 @@ lcd rm shop.test
 - A domain that doesn't end in `.localhost` has to be written to `/etc/hosts`, which needs admin rights. Run `sudo lcd hosts --auto` once and every name you add later sets itself up within a few seconds (`sudo lcd hosts --auto-off` undoes it). Without it, run `sudo lcd hosts` after adding names.
 - The automatic setup installs a small root helper that copies your list of names into `/etc/hosts`, always pointing at `127.0.0.1`. It runs only a root-owned shell script, never anything your user account can change.
 - `.localhost` names need no setup in browsers and curl.
-- Use `.test` for made-up names. Browsers force https on `.dev` and `.app`, so those won't open.
-- HTTP only. The proxy listens on port 80 and accepts connections from your machine only.
+- **https:** `lcd https` creates a certificate authority that exists only on this computer, asks macOS to trust it, and from then on every domain gets its own certificate automatically. Chrome, Safari and Edge accept them. Firefox, Node, curl and Python keep their own lists; point them at `~/.local-custom-domain/https/ca.pem` if they need https. `lcd https --off` removes it all.
+- The authority's private key stays in your home folder. Anything running as your user could use it to make certificates your browser trusts, the same trade-off as `mkcert`. Don't share that folder.
+- Your services keep speaking plain http to the proxy; nothing changes in them. Programs that call `http://shop.test` keep working too; only browser page loads are moved to https.
+- Use `.test` for made-up names. `.dev` and `.app` only work with https on.
+- The proxy accepts connections from your machine only.
 - `lcd uninstall` stops the background proxy.
 
 ## Develop
